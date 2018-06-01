@@ -12,6 +12,13 @@
 @class WJBaseRequest;
 @class WJBaseResponse;
 
+typedef NS_ENUM(NSInteger,WJOAuthSDKResponseStatusCode)
+{
+    WJOAuthSDKResponseStatusCodeSuccess               = 0,//授权成功
+    WJOAuthSDKResponseStatusCodeUserCancel            = -1,//用户取消
+    WJOAuthSDKResponseStatusCodeAuthDeny              = -2,//授权失败
+};
+
 typedef NS_ENUM(NSInteger, WJLanguageType)
 {
     WJLanguageTypeChinese               = -1,//中文
@@ -30,13 +37,6 @@ typedef NS_ENUM(NSInteger, WJLanguageType)
 + (NSString *)getSDKVersion;
 
 /**
- 向WJOAuthSDK注册第三方应用
- @param appKey 第三方应用appKey
- @return 注册成功返回YES，失败返回NO
- */
-+ (BOOL)registerApp:(NSString *)appKey;
-
-/**
  授权页语言
  @param languageType 设置授权页语言，默认跟随系统，若系统语言为中文，则为简体中文，否则，为英文
  @return 语言设置成功返回YES，失败返回NO
@@ -44,13 +44,32 @@ typedef NS_ENUM(NSInteger, WJLanguageType)
 + (BOOL)setLanguageType:(WJLanguageType)languageType;
 
 /**
+ 向WJOAuthSDK注册第三方应用
+ @param appKey 第三方应用appKey
+ @return 注册成功返回YES，失败返回NO
+ */
++ (BOOL)registerApp:(NSString *)appKey;
+
+
+/**
+ 处理WJOAuthSDK通过URL启动第三方应用时传递的数据
+ 
+ 需要在 application:openURL:sourceApplication:annotation:、application:handleOpenURL或者application:openURL:options:中调用
+ @param url 启动第三方应用的URL
+ @param delegate WJOAuthSDKDelegate对象，用于接收WJOAuthSDK触发的消息
+ @see WJOAuthSDKDelegate
+ */
++ (BOOL)handleOpenURL:(NSURL *)url delegate:(id<WJOAuthSDKDelegate>)delegate;
+
+/**
  发送请求给WJOAuthSDK，并切换到授权页面
  
- 请求发送给WJOAuthSDK之后，WJOAuthSDK会进行相关的处理，处理完成之后一定会调用 [WJOAuthSDKDelegate didReceiveWJOAuthSuccessedResponse:] 、[WJOAuthSDKDelegate didReceiveWJOAuthFailedResponse:]、[WJOAuthSDKDelegate didReceiveWJOAuthClickedCancelResponse]方法将处理结果返回给第三方应用
+ 请求发送给WJOAuthSDK之后，WJOAuthSDK会进行相关的处理，处理完成之后一定会调用 [WJOAuthSDKDelegate didReceiveWJOAuthResponse:responseStatusCode:] 方法将处理结果返回给第三方应用
  @param request 具体的发送请求
- @param delegate WJOAuthSDKDelegate对象，用于接收WJOAuthSDK触发的消息
+ @see [WJOAuthSDKDelegate didReceiveWJOAuthResponse:responseStatusCode:]
+ @see WJOAuthBaseRequest
  */
-+ (BOOL)sendRequest:(WJBaseRequest *)request delegate:(id<WJOAuthSDKDelegate>)delegate;
++ (BOOL)sendRequest:(WJBaseRequest *)request;
 
 @end
 
@@ -60,23 +79,12 @@ typedef NS_ENUM(NSInteger, WJLanguageType)
 @protocol WJOAuthSDKDelegate <NSObject>
 
 /**
- 收到一个来自WJOAuthSDK成功的响应
+ 收到一个来自WJOAuthSDK的响应
  
+ 收到WJOAuthSDK的响应后，第三方应用可以通过响应类型、响应的数据完成自己的功能
  @param response 具体的响应对象
  */
-- (void)didReceiveWJOAuthSuccessedResponse:(WJBaseResponse *)response;
-
-/**
- 收到一个来自WJOAuthSDK失败的响应
- 
- @param response 具体的响应对象
- */
-- (void)didReceiveWJOAuthFailedResponse:(WJBaseResponse *)response;
-
-/**
- 收到一个来自WJOAuthSDK用户点击取消的响应
- */
-- (void)didReceiveWJOAuthClickedCancelResponse;
+- (void)didReceiveWJOAuthResponse:(WJBaseResponse *)response responseStatusCode:(WJOAuthSDKResponseStatusCode)responseStatusCode;
 
 @end
 
@@ -131,6 +139,13 @@ WJOAuthSDK所有响应类的基类
  @warning 不能为空，长度小于1K
  */
 @property (nonatomic, strong) NSString *redirectURI;
+
+/**
+ 以空格分隔的权限列表，若不传递此参数，代表请求用户的默认权限
+ 参考开放平台权限列表
+ @warning 长度小于1K
+ */
+@property (nonatomic, strong) NSString *scope;
 
 @end
 

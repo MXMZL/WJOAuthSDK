@@ -8,18 +8,16 @@
 
 #import "ViewController.h"
 
-@interface ViewController ()<WJOAuthSDKDelegate>
+@interface ViewController ()
 @property (nonatomic,strong) UIButton* button;
 @end
 
 @implementation ViewController
-
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     
     [self.view addSubview:self.button];
-
 }
 
 
@@ -39,50 +37,13 @@
     return _button;
 }
 
-- (void)clickLogin:(id)sender {
-    
+- (void)clickLogin:(id)sender
+{
     WJOAuthRequest *request = [WJOAuthRequest request];
     request.state = @"Verification";
+    request.scope = @"user_info";
     request.redirectURI = kRedirectURI;
-    [WJOAuthSDK sendRequest:request delegate:self];
-    
+    [WJOAuthSDK sendRequest:request];
 }
 
-- (void)didReceiveWJOAuthSuccessedResponse:(WJBaseResponse *)response {
-    
-    WJOAuthSuccessedResponse *authorizeResponse = (WJOAuthSuccessedResponse *)response;
-    NSString *requestState = authorizeResponse.requestState;
-    NSString *accessToken = authorizeResponse.accessToken;
-    NSString *message = [NSString stringWithFormat:@"response.requestState:%@/nresponse.accessToken:%@",requestState,accessToken];
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"认证结果" message:message preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *actionCancel = [UIAlertAction actionWithTitle:@"确定"
-                                                           style:UIAlertActionStyleCancel
-                                                         handler:nil];
-    [alertController addAction:actionCancel];
-    [self presentViewController:alertController animated:YES completion:nil];
-}
-
-- (void)didReceiveWJOAuthFailedResponse:(WJBaseResponse *)response {
-    
-    WJOAuthFailedResponse *authorizeResponse = (WJOAuthFailedResponse *)response;
-    NSString *errorCode = authorizeResponse.errorCode;
-    NSString *errorCodeDescription = authorizeResponse.errorCodeDescription;
-    NSString *message = [NSString stringWithFormat:@"response.errorCode:%@/nresponse.errorCodeDescription:%@",errorCode,errorCodeDescription];
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"认证结果" message:message preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *actionCancel = [UIAlertAction actionWithTitle:@"确定"
-                                                           style:UIAlertActionStyleCancel
-                                                         handler:nil];
-    [alertController addAction:actionCancel];
-    [self presentViewController:alertController animated:YES completion:nil];
-}
-
-
-- (void)didReceiveWJOAuthClickedCancelResponse {
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"用户点击取消" message:nil preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *actionCancel = [UIAlertAction actionWithTitle:@"确定"
-                                                           style:UIAlertActionStyleCancel
-                                                         handler:nil];
-    [alertController addAction:actionCancel];
-    [self presentViewController:alertController animated:YES completion:nil];
-}
 @end

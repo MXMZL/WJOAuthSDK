@@ -38,32 +38,55 @@
     return YES;
 }
 
-
-- (void)applicationWillResignActive:(UIApplication *)application {
-    // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-    // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
+#pragma mark -
+- (void)didReceiveWJOAuthResponse:(WJBaseResponse *)response responseStatusCode:(WJOAuthSDKResponseStatusCode)responseStatusCode {
+    
+    if (responseStatusCode == WJOAuthSDKResponseStatusCodeSuccess) {
+        WJOAuthSuccessedResponse *authorizeResponse = (WJOAuthSuccessedResponse *)response;
+        NSString *requestState = authorizeResponse.requestState;
+        NSString *accessToken = authorizeResponse.accessToken;
+        NSString *message = [NSString stringWithFormat:@"response.requestState:%@\nresponse.accessToken:%@",requestState,accessToken];
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"授权成功" message:message preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *actionCancel = [UIAlertAction actionWithTitle:@"确定"
+                                                               style:UIAlertActionStyleCancel
+                                                             handler:nil];
+        [alertController addAction:actionCancel];
+        [self.window.rootViewController presentViewController:alertController animated:YES completion:nil];
+    }
+    else if (responseStatusCode == WJOAuthSDKResponseStatusCodeAuthDeny) {
+        WJOAuthFailedResponse *authorizeResponse = (WJOAuthFailedResponse *)response;
+        NSString *errorCode = authorizeResponse.errorCode;
+        NSString *errorCodeDescription = authorizeResponse.errorCodeDescription;
+        NSString *message = [NSString stringWithFormat:@"response.errorCode:%@\nresponse.errorCodeDescription:%@",errorCode,errorCodeDescription];
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"授权失败" message:message preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *actionCancel = [UIAlertAction actionWithTitle:@"确定"
+                                                               style:UIAlertActionStyleCancel
+                                                             handler:nil];
+        [alertController addAction:actionCancel];
+        [self.window.rootViewController presentViewController:alertController animated:YES completion:nil];
+    }
+    else if (responseStatusCode == WJOAuthSDKResponseStatusCodeUserCancel) {
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"用户点击取消" message:nil preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *actionCancel = [UIAlertAction actionWithTitle:@"确定"
+                                                               style:UIAlertActionStyleCancel
+                                                             handler:nil];
+        [alertController addAction:actionCancel];
+        [self.window.rootViewController presentViewController:alertController animated:YES completion:nil];
+    }
 }
 
-
-- (void)applicationDidEnterBackground:(UIApplication *)application {
-    // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-    // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
+{
+    return [WJOAuthSDK handleOpenURL:url delegate:self];
 }
 
-
-- (void)applicationWillEnterForeground:(UIApplication *)application {
-    // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
+{
+    return [WJOAuthSDK handleOpenURL:url delegate:self];
 }
 
-
-- (void)applicationDidBecomeActive:(UIApplication *)application {
-    // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+- (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url
+{
+    return [WJOAuthSDK handleOpenURL:url delegate:self ];
 }
-
-
-- (void)applicationWillTerminate:(UIApplication *)application {
-    // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-}
-
-
 @end
